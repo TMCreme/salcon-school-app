@@ -1,2 +1,10 @@
 [flake8]
 max-line-length=120
+ignore=F401
+exclude =
+  alembic,
+  __pycache__,
+  test,
+  ./app.py:W605,
+  __init__.py,
+  core/config.py:E501,

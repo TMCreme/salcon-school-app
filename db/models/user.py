@@ -14,7 +14,7 @@ class User(Base):
     last_modified = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'),
         server_onupdate=text('now()')
-        )
+    )
     email = Column(String, nullable=False)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
@@ -22,4 +22,6 @@ class User(Base):
     role_id = Column(Integer, ForeignKey('roles.id'))
     password = Column(String, nullable=False)
 
-    roles = relationship("Role",  back_populates="users")
+    roles = relationship(
+        "Role", back_populates="users"
+    )

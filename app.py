@@ -19,8 +19,15 @@ app.add_middleware(
 
 
 @app.get("/")
-def index():
+def index() -> dict:
     return {"msg": "home"}
+
+
+@app.get("/inactive")
+def redirect() -> dict:
+    return {
+        "msg": "Account is Inactive. Kindly contact Administrator"
+    }  # noqa: E501
 
 
 v1_prefix = "/api/v1"
