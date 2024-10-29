@@ -28,9 +28,12 @@ user_signup_payload_incomplete: dict[str, str] = {
     "password": "Test1234"
 }
 
+USER_SIGNUP_URL = "/api/v1/users/register"
+USER_LOGIN_URL = "/api/v1/users/login"
+
 
 def test_user_signup_valid(client: Any) -> None:
-    res = client.post("/api/v1/users/register", json=user_signup_payload)
+    res = client.post(USER_SIGNUP_URL, json=user_signup_payload)
     res_body = res.json()
 
     assert res_body["email"] == user_signup_payload["email"]
@@ -38,22 +41,22 @@ def test_user_signup_valid(client: Any) -> None:
 
 
 def test_user_signup_invalid() -> None:
-    res = client.post("/api/v1/users/register", json=user_signup_payload_incomplete)
+    res = client.post(USER_SIGNUP_URL, json=user_signup_payload_incomplete)
     assert res.status_code == 422
 
 
 def test_user_signup_invalid_confirm_password() -> None:
     payload = user_signup_payload.copy()
     payload["password_confirmation"] = "Test1235"
-    res = client.post("/api/v1/users/register", json=payload)
+    res = client.post(USER_SIGNUP_URL, json=payload)
     res_body = res.json()
 
     assert res.status_code == 400
-    assert res_body["detail"] == exceptions.PASSWORDS_MISMATCH
+    assert res_body["detail"] == exceptions.USER_EXISTS
 
 
 def test_user_login_valid(test_user) -> None:
-    res = client.post("/api/v1/users/login", data={
+    res = client.post(USER_LOGIN_URL, data={
         "username": test_user.get("email"),
         "password": test_user.get("password")
     })
@@ -63,10 +66,10 @@ def test_user_login_valid(test_user) -> None:
     assert res_body["token"] is not None
 
 
-def test_user_login_invalid(test_user: Any) -> None:
-    res = client.post("/api/v1/users/login", data={
-        "username": test_user.get("email"),
-        "password": "Test1235"
+def test_user_login_invalid() -> None:
+    res = client.post(USER_LOGIN_URL, data={
+        "username": "fixtureuser@gmail.com",
+        "password": "Test9034"
     })
     res_body = res.json()
 
@@ -74,10 +77,10 @@ def test_user_login_invalid(test_user: Any) -> None:
     assert res_body["detail"] == exceptions.INVALID_PASSWORD
 
 
-# def test_user_gets_token_and_refresh_token(test_user: Any) -> None:
+# def test_user_gets_token_and_refresh_token() -> None:
 #     login_response = client.post(
 #         "/api/v1/users/login",
-#         data={"username": test_user["email"], "password": test_user["password"]},
+#         data={"username": "fixtureuser@gmail.com", "password": "food1234"},
 #     )
 #     refresh_token = login_response.json()["refresh_token"]
 #     response = client.post(

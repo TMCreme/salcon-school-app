@@ -42,7 +42,7 @@ async def signup(user: UserSignup, db: Session = Depends(get_db)) -> Any:
     return new_user
 
 
-@auth_router.post("/login", response_model=Token)
+@auth_router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
 def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)) -> Any:
     """Login with OAuth2 Passowrd Form"""
     user_email = user.username.lower()

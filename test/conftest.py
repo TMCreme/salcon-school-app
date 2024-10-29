@@ -4,8 +4,9 @@ Test configuration
 from typing import Any
 # from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.exc import ProgrammingError
 import pytest
 
 from core.config import settings
@@ -19,8 +20,10 @@ pg_pass = settings.POSTGRES_PASSWORD
 pg_host = settings.POSTGRES_SERVER
 pg_port = settings.POSTGRES_PORT
 pg_test_db = settings.POSTGRES_TEST_DB
+pg_db = settings.POSTGRES_DB
 
 TEST_SQLALCHEMY_DATABASE_URL = f"postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_test_db}"
+ADMIN_DATABASE_URL = f"postgresql://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}"
 
 engine = create_engine(TEST_SQLALCHEMY_DATABASE_URL)
 
@@ -28,19 +31,48 @@ TestingSessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=engine)
 
 
-Base.metadata.drop_all(bind=engine)
-# Base.metadata.create_all(bind=engine)
+def create_test_database() -> Any:
+    """Creates the test database if it doesn't exist."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    with admin_engine.connect() as conn:
+        conn.execution_options(isolation_level="AUTOCOMMIT")
+        try:
+            conn.execute(text(f"CREATE DATABASE {pg_test_db}"))
+        except ProgrammingError as e:
+            if "already exists" not in str(e):
+                raise  # Only ignore errors about an existing database
+
+
+def drop_test_database() -> Any:
+    """Drops the test database after tests are complete."""
+    admin_engine = create_engine(ADMIN_DATABASE_URL)
+    with admin_engine.connect() as conn:
+        conn.execution_options(isolation_level="AUTOCOMMIT")
+        conn.execute(text(f"DROP DATABASE IF EXISTS {pg_test_db}"))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database() -> Any:
+    # Create the test database and tables before tests
+    create_test_database()
+    Base.metadata.create_all(bind=engine)
+
+    yield  # Run tests
+
+    # Teardown: Drop all tables and close connections
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
+    drop_test_database()
 
 
 @pytest.fixture()
 def session() -> Any:
-    Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine)
+        # Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture()
