@@ -1,0 +1,53 @@
+---
+
+services:
+  db:
+    image: postgres:15.2-alpine
+    container_name: salschdb
+    restart: always
+    volumes:
+      - salschdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - LANG=en_US.UTF-8
+      - LC_ALL=en_US.UTF-8
+    ports:
+      - "5415:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: schoolapp
+    command: /bin/sh -c "alembic upgrade head && uvicorn app:app --host 0.0.0.0 --port 8080 --reload"
+    volumes:
+      - ./:/code
+    ports:
+      - "8093:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_SERVER=${POSTGRES_SERVER}
+      - POSTGRES_TEST_DB=${POSTGRES_TEST_DB}
+      - BASE_URL=${BASE_URL}
+      - EMAIL_SENDER=${EMAIL_SENDER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_SERVER=${EMAIL_SERVER}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - URL_PATH=${URL_PATH}
+
+volumes:
+  salschdata:

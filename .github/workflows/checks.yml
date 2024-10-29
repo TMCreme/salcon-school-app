@@ -7,60 +7,32 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  build:
-    name: Build and Test
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: github_actions_db
-          POSTGRES_TEST_DB: test_github_actions_db
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-        options: >-
-          --health-cmd pg_isready 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
-
+  test-lint:
+    name: Test and Lint
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        id: dependency
+      - name: Install Docker Compose 
         run: |
-          python -m pip install --upgrade pip
-          pip install --no-cache-dir psycopg2-binary
-          pip install --no-cache-dir -r requirements.txt
-          pip install flake8
-
-      - name: Flake8 Lint
-        run: |
-          flake8
-        id: flake8
-
-      # - name: Upload artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: flake8-lint-results
-      #     path: |
-      #       ./
-      #       *.py
-      #   if: always()
-
-      - name: Run migration
-        run: alembic upgrade head
+          curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
       
-      - name: Test with pytest
-        run: pytest
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+     
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Copy .env.sample to .env
+        run: cp .env.sample .env
+      
+      - name: Run migration
+        run: docker compose run --rm app sh -c "alembic upgrade head"
+
+      - name: Test
+        run: docker compose run --rm app sh -c "pytest"
+      
+      - name: Lint
+        run: docker compose run --rm app sh -c "flake8"
