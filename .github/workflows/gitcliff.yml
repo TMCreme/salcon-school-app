@@ -1,0 +1,44 @@
+name: Generate Changelog
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Generate a changelog
+      id: generate-changelog
+      uses: orhun/git-cliff-action@v3
+      with:
+        config: cliff.toml
+        args: "--verbose --bump"
+      env:
+        OUTPUT: CHANGELOG.md
+
+    - name: Add and commit changelog
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Release ${{ steps.generate-changelog.outputs.version }}"
+        file_pattern: CHANGELOG.md
+
+    - uses: rickstaa/action-create-tag@v1
+      id: "create-tag"
+      with:
+        tag: "${{ steps.generate-changelog.outputs.version }}"
+        tag_exists_error: false
+        message: "Tagging ${{ steps.generate-changelog.outputs.version }}"
+        
