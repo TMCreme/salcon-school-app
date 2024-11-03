@@ -167,11 +167,11 @@ pytest
 ```
 * A combination of build and start command is 
 ```bash
-  docker-compose up --build
+  docker compose up --build
 ```
 * To run tests 
 ```bash
-  docker-compose run --rm app sh -c "python -m pytest test"
+  docker compose run --rm app sh -c "python -m pytest test"
 ```
 ## ⚙️ Project Structure <a name = "structure"></a>
 ```s
@@ -233,8 +233,43 @@ pytest
 
 ```
 
-## ✏️ Contributing <a name = "contributing"></a>
-This is a private project hence reach out to any of the contributors for your contributions
+## Contributing
+
+To maintain the quality and readability of our project history, we require all contributions to adhere to the **Conventional Commits** standard.
+
+### What are Conventional Commits?
+
+Conventional Commits are a specification for adding human and machine-readable meaning to commit messages. This practice facilitates consistency across commit logs, enables automatic versioning, and aids in the generation of release notes.
+
+### Commit Message Format
+
+Each commit message should be structured as follows:
+
+```
+<type>: <description>
+```
+
+#### Allowed `<type>` values include:
+
+- `feat` (new features)
+- `fix` (bug fixes)
+- `doc` (changes to documentation)
+- `style` (formatting, missing semi colons, etc; no production code change)
+- `refactor` (refactoring production code, e.g., renaming a variable)
+- `test` (adding missing tests, refactoring tests; no production code change)
+- `chore` (updating grunt tasks etc; no production code change)
+
+### Example Commit Message
+
+```bash
+feat: add beta sequence
+```
+Describes a new feature added to the project.
+
+### Your Contributions
+
+Ensure your commit messages follow this format. This consistency helps us manage the log history and the project development more effectively. For more detailed information, refer to the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
 
 ### Coding Standards
 - Follow the PEP 8 coding style for Python.
