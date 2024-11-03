@@ -130,6 +130,6 @@ def test_user(client: Any) -> Any:
 #     return mocker.patch('api.routes.auth.create_reset_token', return_value="test_reset_token")
 
 
-# @pytest.fixture
-# def mock_send_email(mocker) -> Any:
-#     return mocker.patch('utils.mail_service.send_email', return_value={"message": "Email has been sent"})
+@pytest.fixture
+def mock_send_email(mocker) -> Any:
+    return mocker.patch('utils.mail_service.send_email', return_value={"message": "Email has been sent"})
